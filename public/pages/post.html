@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>List a Room — PGFinder</title>
+  <link rel="stylesheet" href="/css/style.css"/>
+</head>
+<body>
+  <nav>
+    <a href="/" class="nav-logo">🏠 <span>PGFinder</span></a>
+    <div class="nav-links">
+      <a href="/">Home</a>
+      <a href="/list">Browse Rooms</a>
+      <a href="/manage">Manage</a>
+      <a href="/post" class="cta">+ List Room</a>
+    </div>
+  </nav>
+
+  <div class="container" style="max-width:720px">
+    <div class="page-header">
+      <h1>📋 List Your Room / PG</h1>
+      <p>Fill in the details below to post your listing for students</p>
+    </div>
+
+    <div class="form-card">
+      <form id="post-form" novalidate>
+
+        <!-- Basic Info -->
+        <h3 style="font-family:var(--font-display);font-size:1rem;margin-bottom:1rem;color:var(--accent)">Basic Information</h3>
+
+        <div class="form-group">
+          <label class="form-label">Listing Title *</label>
+          <input type="text" class="form-control" id="title" placeholder="e.g. Spacious single room near PRPCEM" required maxlength="100"/>
+          <div class="error-msg" id="err-title" style="color:var(--danger);font-size:0.78rem;margin-top:0.3rem;display:none"></div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Room Type *</label>
+            <select class="form-control" id="type" required>
+              <option value="">Select type...</option>
+              <option>Single Room</option>
+              <option>Shared Room</option>
+              <option>PG</option>
+              <option>Flat/Apartment</option>
+              <option>1BHK</option>
+              <option>2BHK</option>
+            </select>
+            <div class="error-msg" id="err-type" style="color:var(--danger);font-size:0.78rem;margin-top:0.3rem;display:none"></div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Monthly Rent (₹) *</label>
+            <input type="number" class="form-control" id="rent" placeholder="e.g. 3500" min="0" required/>
+            <div class="error-msg" id="err-rent" style="color:var(--danger);font-size:0.78rem;margin-top:0.3rem;display:none"></div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Available For *</label>
+          <select class="form-control" id="availableFor">
+            <option value="Any">Any (Boys & Girls)</option>
+            <option value="Boys">Boys Only</option>
+            <option value="Girls">Girls Only</option>
+          </select>
+        </div>
+
+        <!-- Location -->
+        <h3 style="font-family:var(--font-display);font-size:1rem;margin:1.5rem 0 1rem;color:var(--accent)">📍 Location</h3>
+
+        <div class="form-group">
+          <label class="form-label">Full Address *</label>
+          <input type="text" class="form-control" id="address" placeholder="House no., Street name" required/>
+          <div class="error-msg" id="err-address" style="color:var(--danger);font-size:0.78rem;margin-top:0.3rem;display:none"></div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Area / Locality *</label>
+            <input type="text" class="form-control" id="area" placeholder="e.g. Rajapeth, Badnera Rd" required/>
+            <div class="error-msg" id="err-area" style="color:var(--danger);font-size:0.78rem;margin-top:0.3rem;display:none"></div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">City</label>
+            <input type="text" class="form-control" id="city" value="Amravati"/>
+          </div>
+        </div>
+
+        <!-- Owner Info -->
+        <h3 style="font-family:var(--font-display);font-size:1rem;margin:1.5rem 0 1rem;color:var(--accent)">👤 Owner Details</h3>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Owner Name *</label>
+            <input type="text" class="form-control" id="ownerName" placeholder="Your full name" required/>
+            <div class="error-msg" id="err-ownerName" style="color:var(--danger);font-size:0.78rem;margin-top:0.3rem;display:none"></div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Contact Number *</label>
+            <input type="tel" class="form-control" id="ownerContact" placeholder="10-digit mobile number" required pattern="[6-9][0-9]{9}"/>
+            <div class="error-msg" id="err-ownerContact" style="color:var(--danger);font-size:0.78rem;margin-top:0.3rem;display:none"></div>
+          </div>
+        </div>
+
+        <!-- Amenities -->
+        <h3 style="font-family:var(--font-display);font-size:1rem;margin:1.5rem 0 1rem;color:var(--accent)">✅ Amenities</h3>
+
+        <div class="form-group">
+          <div class="checkbox-group">
+            <label class="checkbox-item"><input type="checkbox" id="wifi"/> 📶 WiFi</label>
+            <label class="checkbox-item"><input type="checkbox" id="ac"/> ❄️ AC</label>
+            <label class="checkbox-item"><input type="checkbox" id="meals"/> 🍽️ Meals</label>
+            <label class="checkbox-item"><input type="checkbox" id="laundry"/> 👕 Laundry</label>
+            <label class="checkbox-item"><input type="checkbox" id="parking"/> 🚗 Parking</label>
+            <label class="checkbox-item"><input type="checkbox" id="hotWater"/> 🚿 Hot Water</label>
+          </div>
+        </div>
+
+        <!-- Description -->
+        <div class="form-group" style="margin-top:1rem">
+          <label class="form-label">Description (Optional)</label>
+          <textarea class="form-control" id="description" rows="3" placeholder="Any extra details about the room..." maxlength="500" style="resize:vertical"></textarea>
+          <div style="text-align:right;font-size:0.75rem;color:var(--muted);margin-top:0.25rem"><span id="desc-count">0</span>/500</div>
+        </div>
+
+        <div style="display:flex;gap:1rem;margin-top:1.5rem">
+          <button type="submit" class="btn btn-primary" style="flex:1;justify-content:center;padding:0.85rem" id="submit-btn">
+            📤 Submit Listing
+          </button>
+          <button type="button" class="btn btn-ghost" onclick="resetForm()">↺ Clear</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <footer><p>PGFinder &mdash; Mini Project | AI&DS, <span>PRPCEM Amravati</span></p></footer>
+  <div class="toast-container"></div>
+
+  <script src="/js/utils.js"></script>
+  <script>
+    // Character counter for description
+    document.getElementById('description').addEventListener('input', function() {
+      document.getElementById('desc-count').textContent = this.value.length;
+    });
+
+    function showError(id, msg) {
+      const el = document.getElementById('err-' + id);
+      if (el) { el.textContent = msg; el.style.display = msg ? 'block' : 'none'; }
+      const input = document.getElementById(id);
+      if (input) input.style.borderColor = msg ? 'var(--danger)' : 'var(--border)';
+    }
+
+    function clearErrors() {
+      ['title','type','rent','address','area','ownerName','ownerContact'].forEach(id => showError(id, ''));
+    }
+
+    function validateForm(data) {
+      let valid = true;
+      clearErrors();
+
+      if (!data.title.trim() || data.title.length < 5) {
+        showError('title', 'Title must be at least 5 characters'); valid = false;
+      }
+      if (!data.type) {
+        showError('type', 'Please select a room type'); valid = false;
+      }
+      if (!data.rent || data.rent < 0) {
+        showError('rent', 'Enter a valid rent amount'); valid = false;
+      }
+      if (!data.location.address.trim()) {
+        showError('address', 'Address is required'); valid = false;
+      }
+      if (!data.location.area.trim()) {
+        showError('area', 'Area/locality is required'); valid = false;
+      }
+      if (!data.ownerName.trim()) {
+        showError('ownerName', 'Owner name is required'); valid = false;
+      }
+      if (!/^[6-9]\d{9}$/.test(data.ownerContact)) {
+        showError('ownerContact', 'Enter a valid 10-digit Indian mobile number'); valid = false;
+      }
+      return valid;
+    }
+
+    document.getElementById('post-form').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const btn = document.getElementById('submit-btn');
+
+      const data = {
+        title: document.getElementById('title').value,
+        type: document.getElementById('type').value,
+        rent: Number(document.getElementById('rent').value),
+        availableFor: document.getElementById('availableFor').value,
+        location: {
+          address: document.getElementById('address').value,
+          area: document.getElementById('area').value,
+          city: document.getElementById('city').value || 'Amravati'
+        },
+        ownerName: document.getElementById('ownerName').value,
+        ownerContact: document.getElementById('ownerContact').value,
+        description: document.getElementById('description').value,
+        amenities: {
+          wifi: document.getElementById('wifi').checked,
+          ac: document.getElementById('ac').checked,
+          meals: document.getElementById('meals').checked,
+          laundry: document.getElementById('laundry').checked,
+          parking: document.getElementById('parking').checked,
+          hotWater: document.getElementById('hotWater').checked
+        }
+      };
+
+      if (!validateForm(data)) return;
+
+      btn.disabled = true;
+      btn.textContent = '⏳ Submitting...';
+
+      try {
+        const res = await fetch(API, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        const json = await res.json();
+        if (json.success) {
+          showToast('🎉 Room listed successfully!', 'success');
+          setTimeout(() => window.location.href = '/list', 1500);
+        } else {
+          showToast(json.message || 'Failed to submit', 'error');
+          btn.disabled = false;
+          btn.textContent = '📤 Submit Listing';
+        }
+      } catch {
+        showToast('❌ Network error. Is the server running?', 'error');
+        btn.disabled = false;
+        btn.textContent = '📤 Submit Listing';
+      }
+    });
+
+    function resetForm() {
+      document.getElementById('post-form').reset();
+      document.getElementById('desc-count').textContent = '0';
+      clearErrors();
+    }
+  </script>
+</body>
+</html>

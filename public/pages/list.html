@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Browse Rooms — PGFinder</title>
+  <link rel="stylesheet" href="/css/style.css"/>
+</head>
+<body>
+  <nav>
+    <a href="/" class="nav-logo">🏠 <span>PGFinder</span></a>
+    <div class="nav-links">
+      <a href="/">Home</a>
+      <a href="/list">Browse Rooms</a>
+      <a href="/manage">Manage</a>
+      <a href="/post" class="cta">+ List Room</a>
+    </div>
+  </nav>
+
+  <div class="container">
+    <div class="page-header">
+      <h1>Browse Rooms & PGs</h1>
+      <p>Find your perfect accommodation near college</p>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-bar" id="stats-bar">
+      <div class="stat-card"><div class="stat-num" id="stat-total">—</div><div class="stat-label">Total Listings</div></div>
+      <div class="stat-card"><div class="stat-num" id="stat-available">—</div><div class="stat-label">Available Now</div></div>
+      <div class="stat-card"><div class="stat-num" id="stat-minrent">—</div><div class="stat-label">Min Rent (₹)</div></div>
+    </div>
+
+    <!-- Filters -->
+    <div class="filter-bar">
+      <div class="filter-group">
+        <label>Room Type</label>
+        <select class="form-control" id="f-type">
+          <option value="">All Types</option>
+          <option>Single Room</option>
+          <option>Shared Room</option>
+          <option>PG</option>
+          <option>Flat/Apartment</option>
+          <option>1BHK</option>
+          <option>2BHK</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>For</label>
+        <select class="form-control" id="f-gender">
+          <option value="">Any</option>
+          <option value="Boys">Boys</option>
+          <option value="Girls">Girls</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>Max Rent (₹)</label>
+        <input type="number" class="form-control" id="f-maxrent" placeholder="e.g. 5000"/>
+      </div>
+      <div class="filter-group">
+        <label>Area</label>
+        <input type="text" class="form-control" id="f-area" placeholder="e.g. Rajapeth"/>
+      </div>
+      <div class="filter-group">
+        <label>Status</label>
+        <select class="form-control" id="f-status">
+          <option value="">All</option>
+          <option value="true">Available</option>
+          <option value="false">Taken</option>
+        </select>
+      </div>
+      <button class="btn btn-primary" onclick="applyFilters()">🔍 Search</button>
+      <button class="btn btn-ghost" onclick="resetFilters()">↺ Reset</button>
+    </div>
+
+    <!-- Results -->
+    <div id="result-count" style="font-size:0.85rem;color:var(--muted);margin-bottom:1rem;"></div>
+    <div id="rooms-grid" class="rooms-grid">
+      <div class="empty-state" style="grid-column:1/-1"><div class="icon">⏳</div><p>Loading...</p></div>
+    </div>
+  </div>
+
+  <!-- Detail Modal -->
+  <div id="detail-modal" class="modal-overlay" style="display:none">
+    <div class="modal">
+      <div class="modal-header">
+        <span class="modal-title" id="modal-title">Room Details</span>
+        <button class="btn btn-ghost btn-sm" onclick="closeModal()">✕ Close</button>
+      </div>
+      <div id="modal-body"></div>
+    </div>
+  </div>
+
+  <footer><p>PGFinder &mdash; Mini Project | AI&DS, <span>PRPCEM Amravati</span></p></footer>
+
+  <script src="/js/utils.js"></script>
+  <script>
+    let allRooms = [];
+
+    async function loadRooms(params = '') {
+      const grid = document.getElementById('rooms-grid');
+      grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="icon">⏳</div><p>Fetching listings...</p></div>`;
+      try {
+        const res = await fetch(`${API}${params ? '?' + params : ''}`);
+        const json = await res.json();
+        allRooms = json.data;
+        renderRooms(allRooms);
+        updateStats(allRooms);
+      } catch {
+        grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><p>❌ Failed to load. Is server running?</p></div>`;
+      }
+    }
+
+    function updateStats(rooms) {
+      document.getElementById('stat-total').textContent = rooms.length;
+      const avail = rooms.filter(r => r.isAvailable).length;
+      document.getElementById('stat-available').textContent = avail;
+      const rents = rooms.map(r => r.rent);
+      document.getElementById('stat-minrent').textContent = rents.length ? Math.min(...rents).toLocaleString('en-IN') : '—';
+    }
+
+    function renderRooms(rooms) {
+      const grid = document.getElementById('rooms-grid');
+      document.getElementById('result-count').textContent = `Showing ${rooms.length} listing${rooms.length !== 1 ? 's' : ''}`;
+
+      if (!rooms.length) {
+        grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1">
+          <div class="icon">🏠</div><h3>No rooms found</h3>
+          <p>Try adjusting your filters or <a href="/post" style="color:var(--accent)">add a listing</a>.</p>
+        </div>`;
+        return;
+      }
+
+      grid.innerHTML = rooms.map(room => `
+        <div class="room-card">
+          <span class="card-badge ${room.isAvailable ? '' : 'unavailable'}">
+            ${room.isAvailable ? '✓ Available' : '✗ Taken'}
+          </span>
+          <div class="card-body">
+            <div class="card-type">${room.type}</div>
+            <div class="card-title">${room.title}</div>
+            <div class="card-location">📍 ${room.location.area}, ${room.location.city}</div>
+            <div class="card-rent">₹${room.rent.toLocaleString('en-IN')}<span>/month</span></div>
+            <div class="amenity-pills">${buildAmenityPills(room.amenities)}</div>
+            <div style="font-size:0.78rem;color:var(--muted);margin-top:0.5rem">
+              👤 ${room.availableFor} &nbsp;·&nbsp; Posted ${formatDate(room.postedAt)}
+            </div>
+          </div>
+          <div class="card-footer">
+            <button class="btn btn-ghost btn-sm" onclick="viewDetails('${room._id}')">👁 Details</button>
+            <a href="tel:${room.ownerContact}" class="btn btn-primary btn-sm">📞 ${room.ownerContact}</a>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function applyFilters() {
+      const params = new URLSearchParams();
+      const type = document.getElementById('f-type').value;
+      const gender = document.getElementById('f-gender').value;
+      const maxRent = document.getElementById('f-maxrent').value;
+      const area = document.getElementById('f-area').value.trim();
+      const status = document.getElementById('f-status').value;
+      if (type) params.set('type', type);
+      if (gender) params.set('availableFor', gender);
+      if (maxRent) params.set('maxRent', maxRent);
+      if (area) params.set('area', area);
+      if (status !== '') params.set('available', status);
+      loadRooms(params.toString());
+    }
+
+    function resetFilters() {
+      ['f-type','f-gender','f-maxrent','f-area','f-status'].forEach(id => {
+        const el = document.getElementById(id);
+        el.value = el.tagName === 'SELECT' ? '' : '';
+      });
+      loadRooms();
+    }
+
+    async function viewDetails(id) {
+      const room = allRooms.find(r => r._id === id);
+      if (!room) return;
+      document.getElementById('modal-title').textContent = room.title;
+      document.getElementById('modal-body').innerHTML = `
+        <div style="display:flex;flex-direction:column;gap:1rem;">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;">
+            <div style="background:var(--surface2);border-radius:8px;padding:0.9rem;">
+              <div style="font-size:0.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.3rem">Type</div>
+              <div style="font-weight:600">${room.type}</div>
+            </div>
+            <div style="background:var(--surface2);border-radius:8px;padding:0.9rem;">
+              <div style="font-size:0.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.3rem">Monthly Rent</div>
+              <div style="font-weight:700;color:var(--accent);font-family:var(--font-display)">₹${room.rent.toLocaleString('en-IN')}</div>
+            </div>
+            <div style="background:var(--surface2);border-radius:8px;padding:0.9rem;">
+              <div style="font-size:0.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.3rem">Available For</div>
+              <div style="font-weight:600">${room.availableFor}</div>
+            </div>
+            <div style="background:var(--surface2);border-radius:8px;padding:0.9rem;">
+              <div style="font-size:0.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.3rem">Status</div>
+              <div style="font-weight:600;color:${room.isAvailable ? 'var(--success)' : 'var(--danger)'}">${room.isAvailable ? '✓ Available' : '✗ Not Available'}</div>
+            </div>
+          </div>
+          <div style="background:var(--surface2);border-radius:8px;padding:0.9rem;">
+            <div style="font-size:0.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.5rem">📍 Address</div>
+            <div>${room.location.address}, ${room.location.area}, ${room.location.city}</div>
+          </div>
+          ${room.description ? `<div style="background:var(--surface2);border-radius:8px;padding:0.9rem;">
+            <div style="font-size:0.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.5rem">Description</div>
+            <div style="font-size:0.9rem;line-height:1.6;color:var(--muted)">${room.description}</div>
+          </div>` : ''}
+          <div style="background:var(--surface2);border-radius:8px;padding:0.9rem;">
+            <div style="font-size:0.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.5rem">Amenities</div>
+            <div class="amenity-pills">${buildAmenityPills(room.amenities)}</div>
+          </div>
+          <div style="background:var(--surface2);border-radius:8px;padding:0.9rem;">
+            <div style="font-size:0.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.5rem">👤 Owner</div>
+            <div style="font-weight:600">${room.ownerName}</div>
+            <div style="color:var(--muted);font-size:0.85rem;margin-top:0.25rem">📱 ${room.ownerContact}</div>
+          </div>
+          <a href="tel:${room.ownerContact}" class="btn btn-primary btn-full">📞 Call Owner Now</a>
+        </div>
+      `;
+      document.getElementById('detail-modal').style.display = 'flex';
+    }
+
+    function closeModal() { document.getElementById('detail-modal').style.display = 'none'; }
+    document.getElementById('detail-modal').addEventListener('click', e => { if (e.target === e.currentTarget) closeModal(); });
+
+    loadRooms();
+  </script>
+</body>
+</html>

@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Manage Listings — PGFinder</title>
+  <link rel="stylesheet" href="/css/style.css"/>
+  <style>
+    .manage-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .manage-table th {
+      background: var(--surface2);
+      padding: 0.85rem 1rem;
+      text-align: left;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+      border-bottom: 1px solid var(--border);
+    }
+    .manage-table td {
+      padding: 0.9rem 1rem;
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
+    .manage-table tr:last-child td { border-bottom: none; }
+    .manage-table tr:hover td { background: rgba(255,255,255,0.02); }
+    .actions { display: flex; gap: 6px; flex-wrap: wrap; }
+    @media (max-width: 768px) {
+      .manage-table { display: block; overflow-x: auto; white-space: nowrap; }
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <a href="/" class="nav-logo">🏠 <span>PGFinder</span></a>
+    <div class="nav-links">
+      <a href="/">Home</a>
+      <a href="/list">Browse Rooms</a>
+      <a href="/manage">Manage</a>
+      <a href="/post" class="cta">+ List Room</a>
+    </div>
+  </nav>
+
+  <div class="container">
+    <div class="page-header d-flex justify-between align-center" style="flex-wrap:wrap;gap:1rem">
+      <div>
+        <h1>⚙️ Manage Listings</h1>
+        <p>Update, toggle availability, or delete room listings</p>
+      </div>
+      <a href="/post" class="btn btn-primary">+ Add New Room</a>
+    </div>
+
+    <div id="table-container">
+      <div class="empty-state"><div class="icon">⏳</div><p>Loading listings...</p></div>
+    </div>
+  </div>
+
+  <!-- Edit Modal -->
+  <div id="edit-modal" class="modal-overlay" style="display:none">
+    <div class="modal" style="max-width:640px">
+      <div class="modal-header">
+        <span class="modal-title">✏️ Edit Room Listing</span>
+        <button class="btn btn-ghost btn-sm" onclick="closeModal()">✕</button>
+      </div>
+      <form id="edit-form" novalidate>
+        <input type="hidden" id="edit-id"/>
+        <div class="form-group">
+          <label class="form-label">Title *</label>
+          <input type="text" class="form-control" id="edit-title" required/>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Type *</label>
+            <select class="form-control" id="edit-type" required>
+              <option>Single Room</option><option>Shared Room</option>
+              <option>PG</option><option>Flat/Apartment</option>
+              <option>1BHK</option><option>2BHK</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Rent (₹) *</label>
+            <input type="number" class="form-control" id="edit-rent" min="0" required/>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Address *</label>
+            <input type="text" class="form-control" id="edit-address" required/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Area *</label>
+            <input type="text" class="form-control" id="edit-area" required/>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Owner Name *</label>
+            <input type="text" class="form-control" id="edit-ownerName" required/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Contact *</label>
+            <input type="tel" class="form-control" id="edit-ownerContact" required/>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Available For</label>
+          <select class="form-control" id="edit-availableFor">
+            <option value="Any">Any</option>
+            <option value="Boys">Boys</option>
+            <option value="Girls">Girls</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Amenities</label>
+          <div class="checkbox-group">
+            <label class="checkbox-item"><input type="checkbox" id="edit-wifi"/> 📶 WiFi</label>
+            <label class="checkbox-item"><input type="checkbox" id="edit-ac"/> ❄️ AC</label>
+            <label class="checkbox-item"><input type="checkbox" id="edit-meals"/> 🍽️ Meals</label>
+            <label class="checkbox-item"><input type="checkbox" id="edit-laundry"/> 👕 Laundry</label>
+            <label class="checkbox-item"><input type="checkbox" id="edit-parking"/> 🚗 Parking</label>
+            <label class="checkbox-item"><input type="checkbox" id="edit-hotWater"/> 🚿 Hot Water</label>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Description</label>
+          <textarea class="form-control" id="edit-description" rows="3" maxlength="500" style="resize:vertical"></textarea>
+        </div>
+        <div style="display:flex;gap:0.75rem;margin-top:1rem">
+          <button type="submit" class="btn btn-primary" style="flex:1;justify-content:center" id="edit-submit-btn">💾 Save Changes</button>
+          <button type="button" class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Confirm Delete Modal -->
+  <div id="delete-modal" class="modal-overlay" style="display:none">
+    <div class="modal" style="max-width:400px;text-align:center">
+      <div style="font-size:2.5rem;margin-bottom:1rem">🗑️</div>
+      <h3 style="font-family:var(--font-display);margin-bottom:0.5rem">Delete this listing?</h3>
+      <p style="color:var(--muted);font-size:0.9rem;margin-bottom:1.5rem">This action cannot be undone. The listing will be permanently removed.</p>
+      <div style="display:flex;gap:0.75rem;justify-content:center">
+        <button class="btn btn-danger" id="confirm-delete-btn">Yes, Delete</button>
+        <button class="btn btn-ghost" onclick="document.getElementById('delete-modal').style.display='none'">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <footer><p>PGFinder &mdash; Mini Project | AI&DS, <span>PRPCEM Amravati</span></p></footer>
+  <div class="toast-container"></div>
+
+  <script src="/js/utils.js"></script>
+  <script>
+    let rooms = [];
+    let deleteTargetId = null;
+
+    async function loadRooms() {
+      const container = document.getElementById('table-container');
+      try {
+        const res = await fetch(API);
+        const json = await res.json();
+        rooms = json.data;
+        if (!rooms.length) {
+          container.innerHTML = `<div class="empty-state">
+            <div class="icon">📋</div><h3>No listings yet</h3>
+            <p><a href="/post" style="color:var(--accent)">Add your first listing →</a></p>
+          </div>`;
+          return;
+        }
+        renderTable();
+      } catch {
+        container.innerHTML = `<div class="empty-state"><p>❌ Failed to load. Is the server running?</p></div>`;
+      }
+    }
+
+    function renderTable() {
+      const container = document.getElementById('table-container');
+      container.innerHTML = `
+        <div style="overflow-x:auto">
+          <table class="manage-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Title</th>
+                <th>Type</th>
+                <th>Rent</th>
+                <th>Area</th>
+                <th>For</th>
+                <th>Status</th>
+                <th>Posted</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rooms.map((room, i) => `
+                <tr>
+                  <td style="color:var(--muted);font-size:0.8rem">${i + 1}</td>
+                  <td style="max-width:180px">
+                    <div style="font-weight:600;font-size:0.9rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${room.title}</div>
+                    <div style="font-size:0.75rem;color:var(--muted)">${room.ownerName} · ${room.ownerContact}</div>
+                  </td>
+                  <td><span class="pill active" style="white-space:nowrap">${room.type}</span></td>
+                  <td style="font-family:var(--font-display);font-weight:700;color:var(--accent)">₹${room.rent.toLocaleString('en-IN')}</td>
+                  <td style="color:var(--muted);font-size:0.85rem">${room.location.area}</td>
+                  <td style="font-size:0.85rem">${room.availableFor}</td>
+                  <td>
+                    <span style="font-size:0.78rem;font-weight:700;padding:3px 10px;border-radius:99px;background:${room.isAvailable ? 'rgba(74,222,128,0.1)' : 'rgba(248,113,113,0.1)'};color:${room.isAvailable ? 'var(--success)' : 'var(--danger)'}">
+                      ${room.isAvailable ? '✓ Available' : '✗ Taken'}
+                    </span>
+                  </td>
+                  <td style="font-size:0.78rem;color:var(--muted);white-space:nowrap">${formatDate(room.postedAt)}</td>
+                  <td>
+                    <div class="actions">
+                      <button class="btn btn-ghost btn-sm" onclick="openEdit('${room._id}')">✏️</button>
+                      <button class="btn btn-success btn-sm" onclick="toggleAvailability('${room._id}')" title="${room.isAvailable ? 'Mark Taken' : 'Mark Available'}">
+                        ${room.isAvailable ? '🔴' : '🟢'}
+                      </button>
+                      <button class="btn btn-danger btn-sm" onclick="confirmDelete('${room._id}')">🗑️</button>
+                    </div>
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+    }
+
+    function openEdit(id) {
+      const room = rooms.find(r => r._id === id);
+      if (!room) return;
+      document.getElementById('edit-id').value = id;
+      document.getElementById('edit-title').value = room.title;
+      document.getElementById('edit-type').value = room.type;
+      document.getElementById('edit-rent').value = room.rent;
+      document.getElementById('edit-address').value = room.location.address;
+      document.getElementById('edit-area').value = room.location.area;
+      document.getElementById('edit-ownerName').value = room.ownerName;
+      document.getElementById('edit-ownerContact').value = room.ownerContact;
+      document.getElementById('edit-availableFor').value = room.availableFor;
+      document.getElementById('edit-description').value = room.description || '';
+      document.getElementById('edit-wifi').checked = room.amenities.wifi;
+      document.getElementById('edit-ac').checked = room.amenities.ac;
+      document.getElementById('edit-meals').checked = room.amenities.meals;
+      document.getElementById('edit-laundry').checked = room.amenities.laundry;
+      document.getElementById('edit-parking').checked = room.amenities.parking;
+      document.getElementById('edit-hotWater').checked = room.amenities.hotWater;
+      document.getElementById('edit-modal').style.display = 'flex';
+    }
+
+    document.getElementById('edit-form').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const id = document.getElementById('edit-id').value;
+      const btn = document.getElementById('edit-submit-btn');
+      btn.disabled = true; btn.textContent = '⏳ Saving...';
+
+      const contact = document.getElementById('edit-ownerContact').value;
+      if (!/^[6-9]\d{9}$/.test(contact)) {
+        showToast('Enter a valid 10-digit mobile number', 'error');
+        btn.disabled = false; btn.textContent = '💾 Save Changes';
+        return;
+      }
+
+      const data = {
+        title: document.getElementById('edit-title').value,
+        type: document.getElementById('edit-type').value,
+        rent: Number(document.getElementById('edit-rent').value),
+        'location.address': document.getElementById('edit-address').value,
+        'location.area': document.getElementById('edit-area').value,
+        ownerName: document.getElementById('edit-ownerName').value,
+        ownerContact: contact,
+        availableFor: document.getElementById('edit-availableFor').value,
+        description: document.getElementById('edit-description').value,
+        amenities: {
+          wifi: document.getElementById('edit-wifi').checked,
+          ac: document.getElementById('edit-ac').checked,
+          meals: document.getElementById('edit-meals').checked,
+          laundry: document.getElementById('edit-laundry').checked,
+          parking: document.getElementById('edit-parking').checked,
+          hotWater: document.getElementById('edit-hotWater').checked
+        }
+      };
+
+      // Reconstruct location properly
+      const room = rooms.find(r => r._id === id);
+      data.location = {
+        address: document.getElementById('edit-address').value,
+        area: document.getElementById('edit-area').value,
+        city: room?.location?.city || 'Amravati'
+      };
+      delete data['location.address']; delete data['location.area'];
+
+      try {
+        const res = await fetch(`${API}/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        const json = await res.json();
+        if (json.success) {
+          showToast('✅ Room updated successfully!', 'success');
+          closeModal();
+          loadRooms();
+        } else {
+          showToast(json.message || 'Update failed', 'error');
+        }
+      } catch {
+        showToast('❌ Network error', 'error');
+      }
+      btn.disabled = false; btn.textContent = '💾 Save Changes';
+    });
+
+    async function toggleAvailability(id) {
+      try {
+        const res = await fetch(`${API}/${id}/toggle`, { method: 'PATCH' });
+        const json = await res.json();
+        if (json.success) { showToast(json.message, 'success'); loadRooms(); }
+        else showToast(json.message, 'error');
+      } catch { showToast('❌ Network error', 'error'); }
+    }
+
+    function confirmDelete(id) {
+      deleteTargetId = id;
+      document.getElementById('delete-modal').style.display = 'flex';
+    }
+
+    document.getElementById('confirm-delete-btn').addEventListener('click', async function() {
+      if (!deleteTargetId) return;
+      document.getElementById('delete-modal').style.display = 'none';
+      try {
+        const res = await fetch(`${API}/${deleteTargetId}`, { method: 'DELETE' });
+        const json = await res.json();
+        if (json.success) { showToast('🗑️ Listing deleted!', 'success'); loadRooms(); }
+        else showToast(json.message, 'error');
+      } catch { showToast('❌ Network error', 'error'); }
+      deleteTargetId = null;
+    });
+
+    function closeModal() {
+      document.getElementById('edit-modal').style.display = 'none';
+      document.getElementById('delete-modal').style.display = 'none';
+    }
+
+    document.querySelectorAll('.modal-overlay').forEach(el => {
+      el.addEventListener('click', e => { if (e.target === el) closeModal(); });
+    });
+
+    loadRooms();
+  </script>
+</body>
+</html>
