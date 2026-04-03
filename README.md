@@ -130,10 +130,10 @@ npm run dev
 
 ## 👥 Team Members
 
-1. ___________________________
-2. ___________________________
-3. ___________________________
-4. ___________________________
+1. ATHARVA SANTOSH PATIL
+2. AVESH KHAN
+3. ANUJ KEDIA 
+4. Samarth Patil Dalu
 
 ---
 
